@@ -1,101 +1,134 @@
-import Image from "next/image";
+import axios from 'axios';
+import { Suspense } from 'react';
+import TableRows from './table/page';
 
-export default function Home() {
+interface Car {
+  mispar_rechev: string;
+  tozeret_nm: string;
+  kinuy_mishari: string;
+  shnat_yitzur: number;
+  tzeva_rechev: string;
+  sug_delek_nm: string;
+}
+
+interface CarsDataResponse {
+  records: Car[];
+  total: number;
+}
+
+async function fetchCarsData(searchTerm: string = '', page: number = 1, color: string = '', year: string = ''): Promise<CarsDataResponse> {
+  const offset = (page - 1) * 10;
+  
+  const filters: any = {  limit: 10, offset };
+  if (color) filters['filters'] = { tzeva_rechev: color };
+  if (year) filters['filters'] = { ...filters['filters'], shnat_yitzur: year };
+  if(searchTerm) filters['filters'] = { ...filters['filters'], mispar_rechev: searchTerm };
+
+  const response = await axios.post('https://data.gov.il/api/3/action/datastore_search', {
+    resource_id: '053cea08-09bc-40ec-8f7a-156f0677aff3',
+    ...filters
+
+  });
+
+  return { records: response.data.result.records, total: response.data.result.total };
+}
+
+export default async function HomePage({ searchParams }: { searchParams: { search?: string; page?: string; color?: string; year?: string } }) {
+  const searchTerm = searchParams.search || '';
+  const page = parseInt(searchParams.page || '1', 10);
+  const color = searchParams.color || '';
+  const year = searchParams.year || '';
+
+  // Fetch data on the server side
+  const { records: data, total } = await fetchCarsData(searchTerm, page, color, year);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4 text-right">רישום רכבים</h1>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {/* Search Fields */}
+      <form action="/" method="get" className="flex flex-col md:flex-row-reverse mb-4">
+        <input
+          type="text"
+          name="search"
+          defaultValue={searchTerm}
+          placeholder="חפש לפי מספר רכב"
+          className="border p-2 flex-grow text-right rounded mb-2 md:mb-0"
+        />
+        <input
+          type="text"
+          name="color"
+          defaultValue={color}
+          placeholder="חפש לפי צבע"
+          className="border p-2 flex-grow text-right rounded mb-2 mr-2 md:mb-0"
+        />
+        <input
+          type="text"
+          name="year"
+          defaultValue={year}
+          placeholder="חפש לפי שנה"
+          className="border p-2 flex-grow text-right rounded mb-2 mr-2 md:mb-0"
+        />
+        <button type="submit" className="mr-2 p-2 bg-blue-500 text-white rounded">
+          חיפוש
+        </button>
+      </form>
+
+      {searchTerm && (
+  <div className="flex justify-end mb-4">
+    <a href="/" className="p-2 bg-gray-300 text-black rounded">
+      חזרה לעמוד הראשי
+    </a>
+  </div>
+)}
+
+      {/* Table */}
+      <div className="w-full overflow-x-auto">
+        <div className="min-w-max">
+          <div className="flex bg-blue-500 text-white rounded">
+            {['מספר רכב', 'יצרן', 'מודל', 'שנה', 'צבע', 'סוג דלק'].map((header, index) => (
+              <div key={index} className="flex-1 p-4 font-bold text-center">
+                {header}
+              </div>
+            ))}
+          </div>
+
+          {/* Table Rows with Suspense */}
+          
+            <TableRows data={data} currentPage={page} searchTerm={searchTerm} />
+          
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
+      </div>
+
+      {/* Page Information */}
+      <div className="flex justify-center mt-2">
+        <p className="text-gray-700">עמוד {page} מתוך {Math.ceil(total / 10)} </p>
+      </div>
+          
+      {/* Total Records */}
+      <div className="flex justify-center mt-2">
+        <p className="text-gray-700"> רכבים שנמצאו: {total}</p>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-between mt-0">
         <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          href={`/?search=${searchTerm}&color=${color}&year=${year}&page=${page + 1}`}
+          className={`p-2 ${page >= total / 10 ? 'bg-gray-200 text-gray-500 rounded' : 'bg-gray-300 rounded'}`}
+          style={{ pointerEvents: page >= total / 10 ? 'none' : 'auto', cursor: page >= total / 10 ? 'default' : 'pointer' }}
+          aria-disabled={page >= total / 10}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
+          הבא
         </a>
         <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          href={`/?search=${searchTerm}&color=${color}&year=${year}&page=${page - 1}`}
+          className={`p-2 ${page === 1 ? 'bg-gray-200 text-gray-500 rounded' : 'bg-gray-300 rounded'}`}
+          style={{ pointerEvents: page === 1 ? 'none' : 'auto', cursor: page === 1 ? 'default' : 'pointer' }}
+          aria-disabled={page === 1}
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
+          הקודם
         </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
   );
 }
