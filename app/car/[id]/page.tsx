@@ -59,11 +59,13 @@ interface CarPageProps {
   params: { id: string };
 }
 
-export default async function CarPage({ params, searchParams }: { params: { id: string }, searchParams: { page?: string, search?: string } }) {
-    const carDetails = await fetchCarDetails(params.id);
-    const isDisabledVehicle = await checkDisabledRegistry(params.id);
-    const currentPage = searchParams.page || '1';
-    const searchTerm = searchParams.search || '';
+export default async function CarPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ page?: string, search?: string }> }) {
+    const { id } = await params
+    const { page,search } = await searchParams
+    const carDetails = await fetchCarDetails(id);
+    const isDisabledVehicle = await checkDisabledRegistry(id);
+    const currentPage = page || '1';
+    const searchTerm = search || '';
 
 
   if (!carDetails) {

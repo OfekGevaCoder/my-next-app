@@ -1,6 +1,4 @@
 import axios from 'axios';
-import { Suspense } from 'react';
-import TableRows from './table/page';
 
 interface Car {
   mispar_rechev: string;
@@ -16,38 +14,56 @@ interface CarsDataResponse {
   total: number;
 }
 
-async function fetchCarsData(searchTerm: string = '', page: number = 1, color: string = '', year: string = ''): Promise<CarsDataResponse> {
+async function fetchCarsData(
+  searchTerm: string = '',
+  page: number = 1,
+  color: string = '',
+  year: string = ''
+): Promise<CarsDataResponse> {
   const offset = (page - 1) * 10;
-  
-  const filters: any = {  limit: 10, offset };
-  if (color) filters['filters'] = { tzeva_rechev: color };
-  if (year) filters['filters'] = { ...filters['filters'], shnat_yitzur: year };
-  if(searchTerm) filters['filters'] = { ...filters['filters'], mispar_rechev: searchTerm };
+  const filters: { limit: number; offset: number; filters?: Record<string, string> } = {
+    limit: 10,
+    offset,
+  };
+
+  // Add filters if provided
+  if (color) {
+    filters.filters = { ...filters.filters, tzeva_rechev: color };
+  }
+  if (year) {
+    filters.filters = { ...filters.filters, shnat_yitzur: year };
+  }
+  if (searchTerm) {
+    filters.filters = { ...filters.filters, mispar_rechev: searchTerm };
+  }
 
   const response = await axios.post('https://data.gov.il/api/3/action/datastore_search', {
     resource_id: '053cea08-09bc-40ec-8f7a-156f0677aff3',
-    ...filters
-
+    ...filters,
   });
 
   return { records: response.data.result.records, total: response.data.result.total };
 }
 
-export default async function HomePage({ searchParams }: { searchParams: { search?: string; page?: string; color?: string; year?: string } }) {
-  const searchTerm = searchParams.search || '';
-  const page = parseInt(searchParams.page || '1', 10);
-  const color = searchParams.color || '';
-  const year = searchParams.year || '';
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string; page?: string; color?: string; year?: string }>;
+}) {
+  const { search = '', page = '1', color = '', year = '' } = await searchParams;
 
-  // Fetch data on the server side
-  const { records: data, total } = await fetchCarsData(searchTerm, page, color, year);
+  const searchTerm = search;
+  const currentPage = parseInt(page, 10);
+
+  // Fetch data on the server side with the resolved parameters
+  const { records: data, total } = await fetchCarsData(searchTerm, currentPage, color, year);
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4 text-right">רישום רכבים</h1>
 
       {/* Search Fields */}
-      <form action="/" method="get" className="flex flex-col md:flex-row-reverse mb-4">
+      <form action="/" method="get" className="flex flex-col md:flex-row mb-4">
         <input
           type="text"
           name="search"
@@ -75,12 +91,12 @@ export default async function HomePage({ searchParams }: { searchParams: { searc
       </form>
 
       {searchTerm && (
-  <div className="flex justify-end mb-4">
-    <a href="/" className="p-2 bg-gray-300 text-black rounded">
-      חזרה לעמוד הראשי
-    </a>
-  </div>
-)}
+        <div className="flex justify-end mb-4">
+          <a href="/" className="p-2 bg-gray-300 text-black rounded">
+            חזרה לעמוד הראשי
+          </a>
+        </div>
+      )}
 
       {/* Table */}
       <div className="w-full overflow-x-auto">
@@ -93,16 +109,29 @@ export default async function HomePage({ searchParams }: { searchParams: { searc
             ))}
           </div>
 
-          {/* Table Rows with Suspense */}
-          
-            <TableRows data={data} currentPage={page} searchTerm={searchTerm} />
-          
+          {/* Inline Table Rows */}
+          <>
+            {data.map((car, rowIndex) => (
+              <a
+                key={rowIndex}
+                href={`/car/${car.mispar_rechev}?page=${currentPage}&search=${searchTerm}`}
+                className="flex border-b cursor-pointer hover:bg-gray-100"
+              >
+                <div className="flex-1 p-4 text-center">{car.mispar_rechev}</div>
+                <div className="flex-1 p-4 text-center">{car.tozeret_nm}</div>
+                <div className="flex-1 p-4 text-center">{car.kinuy_mishari}</div>
+                <div className="flex-1 p-4 text-center">{car.shnat_yitzur}</div>
+                <div className="flex-1 p-4 text-center">{car.tzeva_rechev}</div>
+                <div className="flex-1 p-4 text-center">{car.sug_delek_nm}</div>
+              </a>
+            ))}
+          </>
         </div>
       </div>
 
       {/* Page Information */}
       <div className="flex justify-center mt-2">
-        <p className="text-gray-700">עמוד {page} מתוך {Math.ceil(total / 10)} </p>
+        <p className="text-gray-700">עמוד {currentPage} מתוך {Math.ceil(total / 10)} </p>
       </div>
           
       {/* Total Records */}
@@ -112,21 +141,21 @@ export default async function HomePage({ searchParams }: { searchParams: { searc
 
       {/* Pagination */}
       <div className="flex justify-between mt-0">
-        <a
-          href={`/?search=${searchTerm}&color=${color}&year=${year}&page=${page + 1}`}
-          className={`p-2 ${page >= total / 10 ? 'bg-gray-200 text-gray-500 rounded' : 'bg-gray-300 rounded'}`}
-          style={{ pointerEvents: page >= total / 10 ? 'none' : 'auto', cursor: page >= total / 10 ? 'default' : 'pointer' }}
-          aria-disabled={page >= total / 10}
-        >
-          הבא
-        </a>
-        <a
-          href={`/?search=${searchTerm}&color=${color}&year=${year}&page=${page - 1}`}
-          className={`p-2 ${page === 1 ? 'bg-gray-200 text-gray-500 rounded' : 'bg-gray-300 rounded'}`}
-          style={{ pointerEvents: page === 1 ? 'none' : 'auto', cursor: page === 1 ? 'default' : 'pointer' }}
-          aria-disabled={page === 1}
+      <a
+          href={`/?search=${searchTerm}&color=${color}&year=${year}&page=${currentPage - 1}`}
+          className={`p-2 ${currentPage === 1 ? 'bg-gray-200 text-gray-500 rounded' : 'bg-gray-300 rounded'}`}
+          style={{ pointerEvents: currentPage === 1 ? 'none' : 'auto', cursor: currentPage === 1 ? 'default' : 'pointer' }}
+          aria-disabled={currentPage === 1}
         >
           הקודם
+        </a>
+        <a
+          href={`/?search=${searchTerm}&color=${color}&year=${year}&page=${currentPage + 1}`}
+          className={`p-2 ${currentPage >= total / 10 ? 'bg-gray-200 text-gray-500 rounded' : 'bg-gray-300 rounded'}`}
+          style={{ pointerEvents: currentPage >= total / 10 ? 'none' : 'auto', cursor: currentPage >= total / 10 ? 'default' : 'pointer' }}
+          aria-disabled={currentPage >= total / 10}
+        >
+          הבא
         </a>
       </div>
     </div>
