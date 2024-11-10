@@ -75,34 +75,34 @@ export default async function CarPage({ params, searchParams }: { params: Promis
   return (
     <div className="container mx-auto p-4 text-right">
       <h1 className="text-4xl font-bold mb-4 text-blue-600">פרטי רכב</h1>
-      <div className="bg-gray-100 p-4 rounded-lg shadow flex flex-row gap-10">
+      <div className="bg-gray-100 p-4 rounded-lg shadow flex flex-row gap-28">
      
             <div>
         <p><strong>מספר רכב: </strong> {carDetails.mispar_rechev}</p>
         <p><strong>יצרן: </strong> {carDetails.tozeret_nm}</p>
-        <p>{carDetails.kinuy_mishari} <strong>:כינוי מסחרי</strong></p>
+        <p><strong>כינוי מסחרי: </strong>{carDetails.kinuy_mishari}</p>
         <p><strong>שנת יצור: </strong> {carDetails.shnat_yitzur}</p>
         <p><strong>צבע רכב: </strong> {carDetails.tzeva_rechev}</p>
         <p><strong>סוג דלק: </strong>{carDetails.sug_delek_nm}</p>
-        <p>{carDetails.ramat_gimur} <strong>:רמת גימור</strong></p>
-        <p>{carDetails.degem_nm} <strong>:מספר דגם</strong></p>
-        <p>{carDetails.degem_cd} <strong>:קוד דגם</strong></p>
-        <p>{carDetails.tozeret_cd} <strong>:קוד תוצר</strong></p>
-        <p>{carDetails.ramat_eivzur_betihuty} <strong>:רמת אבזור בטיחותי</strong></p>
+        <p><strong>רמת גימור: </strong>{carDetails.ramat_gimur}</p>
+        <p> <strong>מספר דגם: </strong>{carDetails.degem_nm}</p>
+        <p><strong>קוד דגם: </strong>{carDetails.degem_cd}</p>
+        <p> <strong>קוד תוצר: </strong>{carDetails.tozeret_cd}</p>
+        <p><strong>רמת אבזור בטיחותי: </strong>{carDetails.ramat_eivzur_betihuty}</p>
         </div>
         <div>
-        <p>{carDetails.kvutzat_zihum} <strong>:קבוצת זיהום</strong></p>
-        <p>{carDetails.degem_manoa} <strong>:דגם מנוע</strong></p>
-        <p>{carDetails.mivchan_acharon_dt.split('-').reverse().join('/')} <strong>:מבחן שנתי אחרון</strong></p>
-        <p>{carDetails.tokef_dt.split('-').reverse().join('/')} <strong>:תוקף רישוי</strong></p>
+        <p><strong>קבוצת זיהום: </strong>{carDetails.kvutzat_zihum}</p>
+        <p><strong>דגם מנוע: </strong>{carDetails.degem_manoa}</p>
+        <p><strong>מבחן שנתי אחרון: </strong>{carDetails.mivchan_acharon_dt.split('-').reverse().join('/')}</p>
+        <p><strong>תוקף רישוי: </strong>{carDetails.tokef_dt.split('-').reverse().join('/')}</p>
         <p><strong>בעלות: </strong>{carDetails.baalut}</p>
-        <p>{carDetails.misgeret} <strong>:מספר שלדה</strong></p>
-        <p>{carDetails.tzeva_cd} <strong>:קוד צבע</strong></p>
-        <p>{carDetails.zmig_kidmi} <strong>:צמיג קדמי</strong></p>
-        <p>{carDetails.zmig_ahori} <strong>:צמיג אחורי</strong></p>
-        <p>{carDetails.horaat_rishum} <strong>:הוראת רישום</strong></p>
-        <p>{carDetails.moed_aliya_lakvish ? carDetails.moed_aliya_lakvish.split('-').reverse().join('/') : ''} 
-  <strong>:מועד עלייה לכביש</strong>
+        <p><strong>מספר שלדה: </strong>{carDetails.misgeret}</p>
+        <p><strong>קוד צבע: </strong>{carDetails.tzeva_cd}</p>
+        <p><strong>צמיג קדמי: </strong>{carDetails.zmig_kidmi}</p>
+        <p><strong>צמיג אחורי: </strong>{carDetails.zmig_ahori}</p>
+        <p><strong>הוראת רישום: </strong>{carDetails.horaat_rishum}</p>
+        <p><strong>מועד עלייה לכביש: </strong>{carDetails.moed_aliya_lakvish ? carDetails.moed_aliya_lakvish.split('-').reverse().join('/') : 'לא זמין'} 
+
 </p>
         </div>
       
